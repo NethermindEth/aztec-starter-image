@@ -1,39 +1,40 @@
 // A simple "Hello World" Aztec smart contract.
 //
-// This contract demonstrates the core Aztec concepts:
+// Demonstrates core Aztec concepts:
 //   - Public state (visible to everyone, like Ethereum)
-//   - Private state (encrypted, only the owner can see it)
-//   - Moving value between public and private state
-//
-// Think of it as a minimal token contract for learning purposes.
+//   - Reading and writing on-chain storage
+//   - View functions (read-only, no transaction needed)
 
 use aztec::macros::aztec;
 
 #[aztec]
-contract HelloWorld {
-    use aztec::prelude::{AztecAddress, Map, PublicMutable};
-    use aztec::macros::{storage::storage, functions::{public, view}};
+pub contract HelloWorld {
+    use aztec::{
+        macros::{functions::external, storage::storage},
+        protocol::address::AztecAddress,
+        state_vars::{Map, PublicMutable},
+    };
 
     // Storage: a simple public map from address to a greeting count.
-    // Public state is visible to everyone — like a regular Ethereum mapping.
+    // Public state is visible to everyone, like a regular Ethereum mapping.
     #[storage]
     struct Storage<Context> {
         greeting_counts: Map<AztecAddress, PublicMutable<Field, Context>, Context>,
     }
 
-    // A public function — executed by the network, state changes are visible.
+    // A public function: executed by the network, state changes are visible.
     // Anyone can call this to say hello and increment their counter.
-    #[public]
+    #[external("public")]
     fn say_hello() {
-        let sender = context.msg_sender();
-        let current = storage.greeting_counts.at(sender).read();
-        storage.greeting_counts.at(sender).write(current + 1);
+        let sender = self.msg_sender();
+        let current = self.storage.greeting_counts.at(sender).read();
+        self.storage.greeting_counts.at(sender).write(current + 1);
     }
 
-    // A view function — reads state without a transaction (free, no gas).
+    // A view function: reads state without a transaction (free, no gas).
     // Returns how many times an address has said hello.
-    #[view]
-    fn get_greeting_count(who: AztecAddress) -> pub Field {
-        storage.greeting_counts.at(who).read()
+    #[external("utility")]
+    unconstrained fn get_greeting_count(who: AztecAddress) -> pub Field {
+        self.storage.greeting_counts.at(who).read()
     }
 }

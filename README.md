@@ -1,6 +1,6 @@
 # Aztec Starter Docker Image
 
-Pre-configured Aztec development environment for the Lloyds Bank demo.
+Pre-configured Aztec development environment with example contracts, CLI tools, and a local network.
 
 ## Build
 

@@ -1,7 +1,6 @@
 # Getting Started with Aztec & Noir
 
 > **Audience:** Technical teams evaluating Aztec for private smart contract development.
-> Prepared for the Aztec Foundation × Lloyds Bank session.
 
 ---
 
@@ -160,29 +159,31 @@ aztec = { git = "https://github.com/AztecProtocol/aztec-packages/", tag = "v4.1.
 ### 3c. Example: simple counter contract (main.nr)
 
 ```rust
-use aztec::prelude::{
-    AztecAddress, Map, NoteGetterOptions, PrivateContext,
-    PrivateImmutable, PrivateMutable, PublicMutable,
-};
+use aztec::macros::aztec;
 
 #[aztec]
-contract Counter {
-    use dep::aztec::prelude::*;
+pub contract Counter {
+    use aztec::{
+        macros::{functions::external, storage::storage},
+        protocol::address::AztecAddress,
+        state_vars::{Map, PublicMutable},
+    };
 
     #[storage]
-    struct Storage {
-        counts: Map<AztecAddress, PrivateMutable<Field>>,
+    struct Storage<Context> {
+        counts: Map<AztecAddress, PublicMutable<Field, Context>, Context>,
     }
 
-    #[private]
-    fn increment(owner: AztecAddress) {
-        let current = storage.counts.at(owner).get_note();
-        // increment logic
+    #[external("public")]
+    fn increment() {
+        let sender = self.msg_sender();
+        let current = self.storage.counts.at(sender).read();
+        self.storage.counts.at(sender).write(current + 1);
     }
 
-    #[public]
-    fn get_count(owner: AztecAddress) -> pub Field {
-        // read public state
+    #[external("utility")]
+    unconstrained fn get_count(owner: AztecAddress) -> pub Field {
+        self.storage.counts.at(owner).read()
     }
 }
 ```
