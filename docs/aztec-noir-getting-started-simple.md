@@ -1,9 +1,5 @@
 # Getting Started with Aztec & Noir
 
-> **Audience:** Technical teams evaluating Aztec for private smart contract development.
-
----
-
 ## What Is Aztec?
 
 Aztec is a privacy-first Layer 2 on Ethereum. It lets you write smart contracts that support **both public and private state** — meaning you can build applications where sensitive data (balances, positions, counterparties) stays confidential while still benefiting from Ethereum's security.

@@ -66,24 +66,3 @@ aztec get-node-info -n https://rpc.testnet.aztec-labs.com
 # Build with matching version
 docker build --build-arg AZTEC_VERSION=4.1.3 -t nethermind/aztec-starter .
 ```
-
-## Publishing
-
-Images are published automatically via GitHub Actions on pushes to `main` and version tags.
-
-To trigger a manual build with a specific Aztec version, use the "Run workflow" button on the **Build and Publish Docker Image** action and provide the Aztec version string.
-
-### Required repository secrets
-
-| Secret | Description |
-|---|---|
-| `DOCKER_HUB_USERNAME` | Docker Hub username with push access to `nethermind/aztec-starter` |
-| `DOCKER_HUB_PASSWORD` | Docker Hub access token |
-
-### Manual push (if needed)
-
-```bash
-docker build --build-arg AZTEC_VERSION=4.1.3 -t nethermind/aztec-starter:4.1.3 -t nethermind/aztec-starter:latest .
-docker push nethermind/aztec-starter:4.1.3
-docker push nethermind/aztec-starter:latest
-```
