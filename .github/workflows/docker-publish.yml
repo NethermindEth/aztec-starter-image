@@ -46,13 +46,14 @@ jobs:
       - name: Determine version and tags
         id: meta
         run: |
-          # Aztec version: from workflow input, or from git tag (strip leading v), or "latest"
+          # Aztec version: from workflow input, from git tag, or from the Dockerfile default.
           if [ -n "${{ inputs.aztec_version }}" ]; then
             VERSION="${{ inputs.aztec_version }}"
           elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            VERSION="latest"
+            # Read the default from the Dockerfile so we never accidentally pass "latest"
+            VERSION=$(grep -m1 'ARG AZTEC_VERSION=' Dockerfile | cut -d= -f2)
           fi
           echo "aztec_version=$VERSION" >> "$GITHUB_OUTPUT"
 
@@ -60,12 +61,9 @@ jobs:
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
 
           # Build the tag list
-          TAGS="${IMAGE_NAME}:${SHORT_SHA}"
-          if [ "$VERSION" != "latest" ]; then
-            TAGS="${TAGS},${IMAGE_NAME}:${VERSION}"
-          fi
-          # Tag as latest on main branch pushes or explicit latest
-          if [ "$GITHUB_REF" = "refs/heads/main" ] || [ "$VERSION" = "latest" ]; then
+          TAGS="${IMAGE_NAME}:${SHORT_SHA},${IMAGE_NAME}:${VERSION}"
+          # Tag as latest on main branch pushes
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
             TAGS="${TAGS},${IMAGE_NAME}:latest"
           fi
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
