@@ -124,22 +124,97 @@ aztec-wallet simulate balance_of_private \
 
 ---
 
-## 3. Writing a Noir Contract from Scratch
+## 3. Explore the Example Contract
 
-All development tools are available inside the container.
+The image ships with a **HelloWorld** contract in `/app/contracts/hello_world/`. Let's compile it, understand how it works, and then deploy it.
 
-### 3a. Project structure
+### 3a. Read the contract source
 
-```
-my-aztec-project/
-├── contracts/
-│   └── my_contract/
-│       ├── src/
-│       │   └── main.nr
-│       └── Nargo.toml
+```bash
+cat /app/contracts/hello_world/src/main.nr
 ```
 
-### 3b. Nargo.toml
+```rust
+use aztec::macros::aztec;
+
+#[aztec]
+pub contract HelloWorld {
+    use aztec::{
+        macros::{functions::external, storage::storage},
+        protocol::address::AztecAddress,
+        state_vars::{Map, PublicMutable},
+    };
+
+    #[storage]
+    struct Storage<Context> {
+        greeting_counts: Map<AztecAddress, PublicMutable<Field, Context>, Context>,
+    }
+
+    #[external("public")]
+    fn say_hello() {
+        let sender = self.msg_sender();
+        let current = self.storage.greeting_counts.at(sender).read();
+        self.storage.greeting_counts.at(sender).write(current + 1);
+    }
+
+    #[external("utility")]
+    unconstrained fn get_greeting_count(who: AztecAddress) -> pub Field {
+        self.storage.greeting_counts.at(who).read()
+    }
+}
+```
+
+**What's happening here:**
+
+| Concept | In the code |
+|---|---|
+| **Storage** | `#[storage] struct Storage` declares on-chain state. `Map<AztecAddress, PublicMutable<Field>>` is like a Solidity `mapping(address => uint)`. |
+| **Public function** | `#[external("public")] fn say_hello()` runs on the network (like Ethereum). State changes are visible to everyone. |
+| **View function** | `#[external("utility")] unconstrained fn get_greeting_count(...)` reads state without a transaction (free, no gas). |
+| **Self access** | `self.msg_sender()` and `self.storage.*` are how you access the caller and storage inside an Aztec contract. |
+
+### 3b. Compile the contract
+
+```bash
+cd /app/contracts/hello_world
+aztec compile
+```
+
+> **Important:** Always use `aztec compile`, not `nargo compile`. The Aztec wrapper adds a required transpilation step that `nargo` alone does not perform.
+
+### 3c. Deploy and interact with HelloWorld
+
+```bash
+# Deploy the compiled contract (--no-init because HelloWorld has no constructor)
+aztec-wallet deploy /app/contracts/hello_world/target/hello_world-HelloWorld.json \
+  --from accounts:test0 \
+  --no-init \
+  -a helloworld
+
+# Call say_hello to increment your greeting count
+aztec-wallet send say_hello \
+  --from accounts:test0 \
+  --contract-address contracts:helloworld
+
+# Check the greeting count (should be 1)
+aztec-wallet simulate get_greeting_count \
+  --from accounts:test0 \
+  --contract-address contracts:helloworld \
+  --args accounts:test0
+```
+
+### 3d. Project structure
+
+To write your own contract from scratch, create a directory with this structure:
+
+```
+my_contract/
+├── src/
+│   └── main.nr
+└── Nargo.toml
+```
+
+The `Nargo.toml` tells the compiler about your project and its dependencies:
 
 ```toml
 [package]
@@ -152,47 +227,7 @@ compiler_version = ">=0.18.0"
 aztec = { git = "https://github.com/AztecProtocol/aztec-packages/", tag = "v4.1.3", directory = "noir-projects/aztec-nr/aztec" }
 ```
 
-### 3c. Example: simple counter contract (main.nr)
-
-```rust
-use aztec::macros::aztec;
-
-#[aztec]
-pub contract Counter {
-    use aztec::{
-        macros::{functions::external, storage::storage},
-        protocol::address::AztecAddress,
-        state_vars::{Map, PublicMutable},
-    };
-
-    #[storage]
-    struct Storage<Context> {
-        counts: Map<AztecAddress, PublicMutable<Field, Context>, Context>,
-    }
-
-    #[external("public")]
-    fn increment() {
-        let sender = self.msg_sender();
-        let current = self.storage.counts.at(sender).read();
-        self.storage.counts.at(sender).write(current + 1);
-    }
-
-    #[external("utility")]
-    unconstrained fn get_count(owner: AztecAddress) -> pub Field {
-        self.storage.counts.at(owner).read()
-    }
-}
-```
-
-> For a full working example, see the [Counter Contract tutorial](https://docs.aztec.network/developers/docs/tutorials/contract_tutorials/counter_contract) or the [Token Contract tutorial](https://docs.aztec.network/developers/docs/tutorials/contract_tutorials/token_contract).
-
-### 3d. Compile
-
-```bash
-aztec compile
-```
-
-> **Important:** Always use `aztec compile`, not `nargo compile`. The Aztec wrapper adds a required transpilation step that `nargo` alone does not perform.
+> For more examples, see the [Counter Contract tutorial](https://docs.aztec.network/developers/docs/tutorials/contract_tutorials/counter_contract) or the [Token Contract tutorial](https://docs.aztec.network/developers/docs/tutorials/contract_tutorials/token_contract).
 
 ### 3e. Generate TypeScript bindings (for JS/TS integration)
 
