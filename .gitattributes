@@ -1,0 +1,6 @@
+# Ensure shell scripts always have LF line endings, even on Windows checkouts
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+
+# Dockerfile doesn't need line-ending enforcement but doesn't hurt
+Dockerfile text eol=lf
