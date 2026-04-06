@@ -8,9 +8,25 @@ set -eu
 IMAGE=${AZTEC_STARTER_IMAGE:-nethermind/aztec-starter}
 CONTAINER_NAME="aztec-starter"
 
+# Find an available port starting from the given port.
+find_available_port() {
+  local port=$1
+  local max_port=$((port + 100))
+  while ss -tln | grep -q ":${port} " || docker ps --format '{{.Ports}}' 2>/dev/null | grep -q "0.0.0.0:${port}->"; do
+    port=$((port + 1))
+    if [ "$port" -gt "$max_port" ]; then
+      echo "Error: no available port found in range 8080-${max_port}" >&2
+      exit 1
+    fi
+  done
+  echo "$port"
+}
+
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   # Remove stopped container with the same name if it exists.
   docker rm "$CONTAINER_NAME" 2>/dev/null || true
+
+  PORT=$(find_available_port 8080)
 
   echo ""
   echo "  ╔══════════════════════════════════════════════════╗"
@@ -32,11 +48,12 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
 
   docker run -d \
     --name "$CONTAINER_NAME" \
-    -p 8080:8080 \
+    -p "$PORT":8080 \
     -v "$PWD:/app" \
     "$IMAGE" > /dev/null
 
   echo "  Network starting in background (takes ~1 minute)."
+  echo "  PXE available at: http://localhost:$PORT"
   echo ""
   echo "  Logs:  tail -f /var/log/aztec.log  (or from host: docker logs -f $CONTAINER_NAME)"
   echo "  Guide: docs/aztec-noir-getting-started-simple.md"
