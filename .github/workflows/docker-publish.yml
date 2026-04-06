@@ -12,7 +12,7 @@ on:
     tags: ["v*"]
     paths:
       - "Dockerfile"
-      - "entrypoint.sh"
+      - "docker/**"
       - "contracts/**"
       - ".github/workflows/docker-publish.yml"
 
