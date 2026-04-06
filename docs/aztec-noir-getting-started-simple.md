@@ -24,14 +24,10 @@ That's it. Everything else comes inside the Docker image.
 We've prepared a Docker image with the full Aztec development environment pre-configured — local network, example contracts, CLI tools, and prefunded accounts.
 
 ```bash
-docker run -it --name aztec-starter -p 8080:8080 nethermind/aztec-starter
+./run.sh
 ```
 
-Wait until you see:
-
-```
-[INFO] Aztec Server listening on port 8080
-```
+This starts the local Aztec network and drops you into a shell. Your current directory is mounted into the container, so any contract changes you make locally are immediately visible inside the container (and vice versa).
 
 This gives you:
 - A local Ethereum node (Anvil)
@@ -40,15 +36,11 @@ This gives you:
 - PXE (Private Execution Environment) on port 8080
 - Pre-loaded example contracts and CLI tools
 
+> **Note:** The network takes a minute or so to fully start. You can check logs with `docker logs -f aztec-starter`. Wait for `Aztec Server listening on port 8080` before interacting.
+
 ---
 
 ## 2. Interact with the Network
-
-Open a **new terminal** and connect to the running container:
-
-```bash
-docker exec -it aztec-starter bash
-```
 
 Now you're inside the container with all Aztec tools available.
 
@@ -97,7 +89,7 @@ aztec-wallet simulate balance_of_public \
   --args accounts:test0
 ```
 
-Expected output: `Simulation result: 100n`
+Expected output: `Simulation result: 100n` (the `n` suffix indicates a BigInt — just read it as 100)
 
 ### 2f. Move tokens to private state
 

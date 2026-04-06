@@ -37,9 +37,9 @@ RUN mkdir /tmp/inquirer-install && \
 # Copy the example contracts into the image
 COPY contracts /app/contracts
 
-# Copy the entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# Copy the entrypoint script outside /app so it isn't shadowed by volume mounts.
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Set working directory to the app folder
 WORKDIR /app
@@ -49,4 +49,4 @@ EXPOSE 8080
 
 # Default: start the local network
 # Override with "shell" to get an interactive terminal
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
